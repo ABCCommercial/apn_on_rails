@@ -91,6 +91,31 @@ class APN::Notification < APN::Base
     # 
     # This method expects an Array of APN::Notifications. If no parameter is passed
     # in then it will use the following:
+    #   APN::Notification.find_in_batches(:conditions => {:sent_at => nil})
+    # 
+    # As each APN::Notification is sent the <tt>sent_at</tt> column will be timestamped,
+    # so as to not be sent again.
+    # 
+    # This can be run from the following Rake task:
+    #   $ rake apn:notifications:deliver
+    def send_notifications(notifications)
+
+      if (notifications)
+        deliver_notifications(notifications)
+      else
+        # batch them
+        APN::Notification.find_in_batches(:conditions => {:sent_at => nil}) do |group|
+            deliver_notifications(group)
+        end
+      end
+
+    end
+
+    # Opens a connection to the Apple APN server and attempts to batch deliver
+    # an Array of notifications.
+    # 
+    # This method expects an Array of APN::Notifications. If no parameter is passed
+    # in then it will use the following:
     #   APN::Notification.all(:conditions => {:sent_at => nil})
     # 
     # As each APN::Notification is sent the <tt>sent_at</tt> column will be timestamped,
@@ -98,7 +123,7 @@ class APN::Notification < APN::Base
     # 
     # This can be run from the following Rake task:
     #   $ rake apn:notifications:deliver
-    def send_notifications(notifications = APN::Notification.all(:conditions => {:sent_at => nil}))
+    def deliver_notifications(notifications)
       unless notifications.nil? || notifications.empty?
 
         APN::Connection.open_for_delivery do |conn, sock|
