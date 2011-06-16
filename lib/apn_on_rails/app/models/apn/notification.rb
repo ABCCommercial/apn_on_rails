@@ -98,7 +98,7 @@ class APN::Notification < APN::Base
     # 
     # This can be run from the following Rake task:
     #   $ rake apn:notifications:deliver
-    def send_notifications(notifications)
+    def send_notifications(notifications=nil)
 
       if (notifications)
         deliver_notifications(notifications)
